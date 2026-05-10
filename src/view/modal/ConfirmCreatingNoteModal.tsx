@@ -2,7 +2,7 @@ import {Modal, Setting} from "obsidian";
 import React, {ChangeEvent} from "react";
 import {createRoot, Root} from "react-dom/client";
 import Path from "../../util/Path";
-import ChinaCalendarPlugin from "../../main";
+import ChineseCalendarPlugin from "../../main";
 
 
 function ControlElement({modal}: { modal: ConfirmCreatingNoteModal }) {
@@ -27,13 +27,13 @@ function ControlElement({modal}: { modal: ConfirmCreatingNoteModal }) {
 
 export default class ConfirmCreatingNoteModal extends Modal {
 
-    public plugin: ChinaCalendarPlugin;
+    public plugin: ChineseCalendarPlugin;
     private filename: Path;                     // 要创建的文件名，可以包含路径
     private shouldCreateNote: boolean;          // 弹窗关闭时，是否应该创建笔记
 
     private controlElementRoot: Root | null;
 
-    constructor(filename: Path, plugin: ChinaCalendarPlugin) {
+    constructor(filename: Path, plugin: ChineseCalendarPlugin) {
         super(plugin.app);
         this.plugin = plugin;
         this.filename = filename;

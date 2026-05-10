@@ -1,4 +1,4 @@
 import {createContext} from "react";
-import ChinaCalendarPlugin from "../main";
+import ChineseCalendarPlugin from "../main";
 
-export const PluginContext = createContext<ChinaCalendarPlugin | undefined>(undefined);
+export const PluginContext = createContext<ChineseCalendarPlugin | undefined>(undefined);

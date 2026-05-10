@@ -1,8 +1,8 @@
 import React, {ChangeEvent, useState} from "react";
-import ChinaCalendarPlugin from "../../main";
+import ChineseCalendarPlugin from "../../main";
 
 
-export default function ImmutableFontSizeSlider({plugin}: { plugin: ChinaCalendarPlugin }) {
+export default function ImmutableFontSizeSlider({plugin}: { plugin: ChineseCalendarPlugin }) {
 
     const [immutableFontSizeFactor, setImmutableFontSizeFactor] = useState<number>(plugin.viewController.getImmutableFontSizeFactor());
 
