@@ -1,4 +1,4 @@
-import ChinaCalendarPlugin from "../main";
+import ChineseCalendarPlugin from "../main";
 import {CalendarView, VIEW_TYPE_CALENDAR} from "../view/CalendarView";
 
 
@@ -8,11 +8,11 @@ import {CalendarView, VIEW_TYPE_CALENDAR} from "../view/CalendarView";
  */
 export class CalendarViewController {
 
-    public readonly plugin: ChinaCalendarPlugin;
+    public readonly plugin: ChineseCalendarPlugin;
     private requestCounter: number;                             // 请求刷新的次数
     private lastRequestTime: number;                            // 上次请求时间
 
-    constructor(plugin: ChinaCalendarPlugin) {
+    constructor(plugin: ChineseCalendarPlugin) {
         this.plugin = plugin;
         this.requestCounter = 0;
         this.lastRequestTime = 0;

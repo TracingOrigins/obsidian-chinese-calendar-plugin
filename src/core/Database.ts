@@ -1,4 +1,4 @@
-import ChinaCalendarPlugin from "../main";
+import ChineseCalendarPlugin from "../main";
 import PluginSetting from "../entity/PluginSetting";
 
 
@@ -7,10 +7,10 @@ import PluginSetting from "../entity/PluginSetting";
  */
 export default class Database {
 
-    public readonly plugin: ChinaCalendarPlugin;
+    public readonly plugin: ChineseCalendarPlugin;
     public setting: PluginSetting;
 
-    constructor(plugin: ChinaCalendarPlugin) {
+    constructor(plugin: ChineseCalendarPlugin) {
         this.plugin = plugin;
         this.setting = new PluginSetting();
     }

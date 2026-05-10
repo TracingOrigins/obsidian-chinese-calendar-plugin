@@ -1,8 +1,8 @@
 import React, {ChangeEvent, useState} from "react";
-import ChinaCalendarPlugin from "../../main";
+import ChineseCalendarPlugin from "../../main";
 
 
-export default function FontSizeChangeModeSelect({plugin}: { plugin: ChinaCalendarPlugin }) {
+export default function FontSizeChangeModeSelect({plugin}: { plugin: ChineseCalendarPlugin }) {
 
     const [fontSizeChangeMode, setFontSizeChangeMode] = useState(plugin.viewController.getFontSizeChangeMode());
 

@@ -12,7 +12,7 @@ import {NoteType} from "./base/enum";
 
 
 // 插件对象
-export default class ChinaCalendarPlugin extends Plugin {
+export default class ChineseCalendarPlugin extends Plugin {
 
     public readonly database: Database;
     public readonly noteController: NoteController;
@@ -47,7 +47,7 @@ export default class ChinaCalendarPlugin extends Plugin {
             id: "active-calendar-view",
             name: "打开日历视图",
             callback: () => {
-                void ChinaCalendarPlugin.activateCalendarView(this);
+                void ChineseCalendarPlugin.activateCalendarView(this);
             }
         });
         this.addCommand({
@@ -97,11 +97,11 @@ export default class ChinaCalendarPlugin extends Plugin {
 
         // 添加左侧边栏图标
         this.addRibbonIcon("calendar-check", "打开日历", () => {
-            void ChinaCalendarPlugin.activateCalendarView(this);
+            void ChineseCalendarPlugin.activateCalendarView(this);
         });
 
         if (this.app.workspace.layoutReady) {
-            await ChinaCalendarPlugin.activateCalendarView(this);
+            await ChineseCalendarPlugin.activateCalendarView(this);
         }
     }
 

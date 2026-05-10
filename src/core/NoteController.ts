@@ -5,7 +5,7 @@ import SelectedItem from "../entity/SelectedItem";
 import Path from "../util/Path";
 import PathUtil from "../util/PathUtil";
 import ConfirmCreatingNoteModal from "../view/modal/ConfirmCreatingNoteModal";
-import ChinaCalendarPlugin from "../main";
+import ChineseCalendarPlugin from "../main";
 
 
 /**
@@ -13,10 +13,10 @@ import ChinaCalendarPlugin from "../main";
  */
 export default class NoteController {
 
-    public readonly plugin: ChinaCalendarPlugin;
+    public readonly plugin: ChineseCalendarPlugin;
     private noteType: NoteType;
 
-    constructor(plugin: ChinaCalendarPlugin) {
+    constructor(plugin: ChineseCalendarPlugin) {
         this.plugin = plugin;
         this.noteType = NoteType.DAILY;
     }

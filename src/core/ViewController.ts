@@ -1,4 +1,4 @@
-import ChinaCalendarPlugin from "../main";
+import ChineseCalendarPlugin from "../main";
 import {FontSizeChangeMode, QuarterNameMode} from "../base/enum";
 
 
@@ -7,10 +7,10 @@ import {FontSizeChangeMode, QuarterNameMode} from "../base/enum";
  */
 export default class ViewController {
 
-    public readonly plugin: ChinaCalendarPlugin;
+    public readonly plugin: ChineseCalendarPlugin;
     private quarterNameMap: Map<number, string>;
 
-    constructor(plugin: ChinaCalendarPlugin) {
+    constructor(plugin: ChineseCalendarPlugin) {
         this.plugin = plugin;
         this.quarterNameMap = new Map;
         this.updateQuarterNameMap();
