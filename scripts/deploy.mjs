@@ -20,10 +20,41 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import dotenv from 'dotenv';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// ==================== 路径常量 ====================
+/**
+ * 将 .env 文件中的键值对合并进 process.env（不覆盖已有环境变量，与 dotenv 默认行为一致）。
+ * 仅支持常见格式：KEY=value、可选引号、# 行注释与空行。
+ * @param {string} filePath .env 绝对路径
+ */
+function applyDotenvFile(filePath) {
+	const content = fs.readFileSync(filePath, 'utf8');
+	for (const line of content.split(/\r?\n/)) {
+		const trimmed = line.trim();
+		if (!trimmed || trimmed.startsWith('#')) {
+			continue;
+		}
+		const eq = trimmed.indexOf('=');
+		if (eq === -1) {
+			continue;
+		}
+		const key = trimmed.slice(0, eq).trim();
+		if (!key) {
+			continue;
+		}
+		let value = trimmed.slice(eq + 1).trim();
+		if (
+			(value.startsWith('"') && value.endsWith('"')) ||
+			(value.startsWith("'") && value.endsWith("'"))
+		) {
+			value = value.slice(1, -1);
+		}
+		if (process.env[key] === undefined) {
+			process.env[key] = value;
+		}
+	}
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../');
@@ -70,12 +101,26 @@ function copyDir(src, dest) {
  * 创建可点击的路径链接（使用 OSC 8 转义序列，在部分终端中可直接点击文件路径）。
  * 主要用于在控制台输出中提供方便跳转的本地文件链接。
  * @param filePath 本地文件或目录路径
+ * @param displayText 展示给用户看的文本（可选，默认显示原始路径）
  * @returns 带有终端点击跳转能力的字符串
  */
-function createClickablePath(filePath) {
-	const normalizedPath = path.resolve(filePath).replace(/\\/g, '/');
-	const fileUrl = `file:///${normalizedPath}`;
-	return `\x1b]8;;${fileUrl}\x1b\\${filePath}\x1b]8;;\x1b\\`;
+function createClickablePath(filePath, displayText) {
+	const resolvedPath = path.resolve(filePath);
+	let targetPathForUrl = resolvedPath;
+
+	// 如果目标是目录，给 URL 结尾补上 "/"，部分终端/系统对目录打开更稳定
+	try {
+		if (fs.existsSync(resolvedPath) && fs.lstatSync(resolvedPath).isDirectory()) {
+			targetPathForUrl = resolvedPath.endsWith(path.sep) ? resolvedPath : resolvedPath + path.sep;
+		}
+	} catch {
+		// 忽略：只要能生成 URL 即可
+	}
+
+	// 使用标准 API 生成 file:// URL（自动处理 Windows 盘符与空格编码）
+	const fileUrl = pathToFileURL(targetPathForUrl).href;
+	const text = displayText ?? path.basename(resolvedPath);
+	return `\x1b]8;;${fileUrl}\x1b\\${text}\x1b]8;;\x1b\\`;
 }
 
 // ==================== 参数与配置解析 ====================
@@ -121,7 +166,7 @@ function getVaultPath() {
 		process.exit(0);
 	}
 
-	dotenv.config({ path: envPath });
+	applyDotenvFile(envPath);
 	const vaultPath = process.env.VAULT_PATH;
 
 	if (!vaultPath) {
@@ -195,11 +240,11 @@ function getPluginDir(vaultPath, pluginId) {
 // ==================== 插件目录处理 ====================
 
 /**
- * 备份已有插件目录中的 data.json。
+ * 同步插件目录与 dist 中的 data.json。
  * - 仅当插件目录存在且为目录时生效。
- * - 如果目录下存在 data.json，则复制到 dist 目录内，避免重新部署时丢失用户配置。
- * @param vaultPath Vault 根路径
- * @param pluginId 插件 ID
+ * - 若插件目录存在 data.json，则复制到 dist（调用方需已保证 dist 存在），避免重新部署时丢失用户配置。同步失败时，会打印错误并退出。
+ * - 若插件目录不存在 data.json，则删除 dist 中的 data.json（若存在），避免沿用旧配置。同步失败时，会打印错误并退出。
+ * @param pluginDir 插件目录绝对路径
  */
 function backupDataJson(pluginDir) {
 	// 不存在或不是文件夹则直接跳过
@@ -207,12 +252,19 @@ function backupDataJson(pluginDir) {
 	const stats = fs.lstatSync(pluginDir);
 	if (!stats.isDirectory()) return;
 
-	// 仅在存在 data.json 时才进行复制
 	const dataJsonPath = path.join(pluginDir, 'data.json');
-	if (!fs.existsSync(dataJsonPath)) return;
-
-	// 复制 data.json 到 dist 目录
 	const distDataJsonPath = path.join(distDir, 'data.json');
+
+	// 若插件目录不存在 data.json，则删除 dist 中的 data.json（若存在），避免沿用旧配置
+	if (!fs.existsSync(dataJsonPath)) {
+		try {
+			fs.rmSync(distDataJsonPath, { force: true });
+		} catch (err) {
+			log.warn(`无法删除 dist 中的 data.json: ${err?.message ?? err}`);
+		}
+		return;
+	}
+
 	fs.copyFileSync(dataJsonPath, distDataJsonPath);
 }
 
@@ -258,8 +310,7 @@ function deployDev(context) {
 
 		// 已存在且是软链接，且指向 dist：直接复用并返回
 		if (stats.isSymbolicLink() && isExistingSymlinkToDist(pluginDir)) {
-			// log.success(`软链接已存在!（dist → ${pluginId}）`);
-			log.success(`软链接已存在：dist → ${pluginId}`);
+			log.info(`链接成功：${createClickablePath(distDir, 'dist')} → ${createClickablePath(pluginDir, pluginId)}`);
 			return;
 		}
 
@@ -269,9 +320,9 @@ function deployDev(context) {
 
 	// 确保父目录存在
 	fs.mkdirSync(path.dirname(pluginDir), { recursive: true });
+	
 	fs.symlinkSync(distDir, pluginDir, linkType);
-	// log.success(`软链接创建成功！（dist → ${pluginId}）`);
-	log.success(`软链接创建成功：dist → ${pluginId}`);
+	log.info(`链接成功：${createClickablePath(distDir, 'dist')} → ${createClickablePath(pluginDir, pluginId)}`);
 }
 
 /**
@@ -291,8 +342,7 @@ function deployBuild(context) {
 	copyDir(distDir, pluginDir);
 	// 统计复制后的文件数量，用于日志输出
 	const fileNames = fs.readdirSync(pluginDir).sort();
-	// log.success(`复制成功！（dist → ${pluginId}，已复制 ${fileNames.length} 个文件）`);
-	log.success(`复制成功：dist → ${pluginId}，已复制 ${fileNames.length} 个文件`);
+	log.info(`复制成功：${createClickablePath(distDir, 'dist')} → ${createClickablePath(pluginDir, pluginId)}`);
 }
 
 // ==================== 主流程入口 ====================
@@ -314,9 +364,7 @@ function main() {
 	ensureDistReady();
 
 	log.info(`开始部署：${mode} 模式`);
-	log.info(`源路径：${createClickablePath(distDir)}`);
-	log.info(`目标路径：${createClickablePath(pluginDir)}`);
-
+	
 	// 构造部署上下文
 	const context = { mode, vaultPath, pluginId, pluginDir };
 
